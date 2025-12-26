@@ -2,27 +2,27 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.l2jserver</groupId>
 	<artifactId>l2j-server-login</artifactId>
-	<version>2.6.7.3</version>
+	<version>2.6.8.0</version>
 	<name>L2J Login Server</name>
 	<description>L2J Login Server handles the game client authentication and login.</description>
 	<url>https://bitbucket.org/l2jserver/l2j-server-login/</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
+		<maven.compiler.source>25</maven.compiler.source>
+		<maven.compiler.target>25</maven.compiler.target>
 		<!-- External -->
-		<log4j.version>2.24.3</log4j.version>
-		<jakarta.mail-api.version>2.1.3</jakarta.mail-api.version>
+		<log4j.version>2.25.3</log4j.version>
+		<jakarta.mail-api.version>2.1.5</jakarta.mail-api.version>
 		<owner.version>1.0.12</owner.version>
 		<!-- L2J -->
-		<l2j-server-commons.version>2.6.8.1</l2j-server-commons.version>
+		<l2j-server-commons.version>2.6.9.0</l2j-server-commons.version>
 		<!-- Plugins -->
 		<dependency-check-maven.level>8</dependency-check-maven.level>
-		<dependency-check-maven.version>11.1.1</dependency-check-maven.version>
-		<maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
-		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
-		<maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
+		<dependency-check-maven.version>12.1.9</dependency-check-maven.version>
+		<maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
+		<maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
+		<maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
 	</properties>
 	<licenses>
 		<license>
