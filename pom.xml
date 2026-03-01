@@ -19,9 +19,9 @@
 		<l2j-server-commons.version>2.6.9.0</l2j-server-commons.version>
 		<!-- Plugins -->
 		<dependency-check-maven.level>8</dependency-check-maven.level>
-		<dependency-check-maven.version>12.1.9</dependency-check-maven.version>
+		<dependency-check-maven.version>12.2.0</dependency-check-maven.version>
 		<maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
-		<maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
+		<maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
 		<maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
 	</properties>
 	<licenses>
