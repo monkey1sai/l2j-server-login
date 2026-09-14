@@ -39,29 +39,29 @@ import com.l2jserver.loginserver.GameServerThread;
  * @version 2.6.1.0
  */
 public class ChangePassword extends BaseRecievePacket {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(ChangePassword.class);
-	
+
 	private static GameServerThread gst = null;
-	
+
 	public ChangePassword(byte[] decrypt) {
 		super(decrypt);
-		
+
 		String accountName = readS();
 		String characterName = readS();
 		String currentPassword = readS();
 		String newPassword = readS();
-		
+
 		for (GameServerInfo gsi : GameServerTable.getInstance().getRegisteredGameServers().values()) {
 			if ((gsi.getGameServerThread() != null) && gsi.getGameServerThread().hasAccountOnGameServer(accountName)) {
 				gst = gsi.getGameServerThread();
 			}
 		}
-		
+
 		if (gst == null) {
 			return;
 		}
-		
+
 		if ((currentPassword == null) || (newPassword == null)) {
 			gst.ChangePasswordResponse((byte) 0, characterName, "Invalid password data! Try again.");
 		} else {
@@ -71,7 +71,7 @@ public class ChangePassword extends BaseRecievePacket {
 				String currentPasswordEnc = Base64.getEncoder().encodeToString(raw);
 				String pass = null;
 				int passUpdated;
-				
+
 				try (var con = ConnectionFactory.getInstance().getConnection();
 					var ps = con.prepareStatement("SELECT password FROM accounts WHERE login=?")) {
 					ps.setString(1, accountName);
@@ -81,7 +81,7 @@ public class ChangePassword extends BaseRecievePacket {
 						}
 					}
 				}
-				
+
 				if (currentPasswordEnc.equals(pass)) {
 					final var password = md.digest(newPassword.getBytes(UTF_8));
 					final var newPasswordEnc = Base64.getEncoder().encodeToString(password);
@@ -91,7 +91,7 @@ public class ChangePassword extends BaseRecievePacket {
 						ps.setString(2, accountName);
 						passUpdated = ps.executeUpdate();
 					}
-					
+
 					LOG.info("The password for account {} has been changed from {} to {}.", accountName, currentPasswordEnc, newPasswordEnc);
 					if (passUpdated > 0) {
 						gst.ChangePasswordResponse((byte) 1, characterName, "You have successfully changed your password!");

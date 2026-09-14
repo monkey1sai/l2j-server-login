@@ -35,16 +35,16 @@ import com.l2jserver.loginserver.GameServerThread;
  */
 public class PlayerLogout extends BaseRecievePacket {
 	private static final Logger LOG = LoggerFactory.getLogger(PlayerLogout.class);
-	
+
 	public PlayerLogout(byte[] decrypt, GameServerThread server) {
 		super(decrypt);
 		String account = readS();
-		
+
 		server.removeAccountOnGameServer(account);
 		if (server().isDebug()) {
 			LOG.info("Player {} logged out from game server {}[{}].", account, ServerNameDAO.getServer(server.getServerId()), server.getServerId());
 		}
-		
+
 		server.broadcastToTelnet("Player " + account + " disconnected from Game Server " + server.getServerId() + ".");
 	}
 }

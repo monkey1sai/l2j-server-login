@@ -30,7 +30,7 @@ import com.l2jserver.loginserver.network.loginserverpackets.PlayerAuthResponse;
  * @version 2.6.1.0
  */
 public class PlayerAuthRequest extends BaseRecievePacket {
-	
+
 	public PlayerAuthRequest(byte[] decrypt, GameServerThread server) {
 		super(decrypt);
 		String account = readS();
@@ -39,7 +39,7 @@ public class PlayerAuthRequest extends BaseRecievePacket {
 		int loginKey1 = readD();
 		int loginKey2 = readD();
 		SessionKey sessionKey = new SessionKey(loginKey1, loginKey2, playKey1, playKey2);
-		
+
 		PlayerAuthResponse authResponse;
 		SessionKey key = LoginController.getInstance().getKeyForAccount(account);
 		if ((key != null) && key.equals(sessionKey)) {

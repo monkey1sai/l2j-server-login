@@ -26,37 +26,37 @@ import org.aeonbits.owner.ConfigFactory;
  * @version 2.6.1.0
  */
 public class Configuration {
-	
+
 	private static final EmailConfiguration email = ConfigFactory.create(EmailConfiguration.class);
-	
+
 	private static final ServerConfiguration server = ConfigFactory.create(ServerConfiguration.class);
-	
+
 	private static final DatabaseConfiguration database = ConfigFactory.create(DatabaseConfiguration.class);
-	
+
 	private static final MMOConfiguration mmo = ConfigFactory.create(MMOConfiguration.class);
-	
+
 	private static final TelnetConfiguration telnet = ConfigFactory.create(TelnetConfiguration.class);
-	
+
 	private Configuration() {
 		// Do nothing.
 	}
-	
+
 	public static EmailConfiguration email() {
 		return email;
 	}
-	
+
 	public static ServerConfiguration server() {
 		return server;
 	}
-	
+
 	public static DatabaseConfiguration database() {
 		return database;
 	}
-	
+
 	public static MMOConfiguration mmo() {
 		return mmo;
 	}
-	
+
 	public static TelnetConfiguration telnet() {
 		return telnet;
 	}

@@ -19,10 +19,16 @@
 package com.l2jserver.loginserver.network.serverpackets;
 
 /**
- * Format: d d: the failure reason
+ * Sends a login failure reason to the client.<br>
+ * Format:<br>
+ * d: packet id<br>
+ * d: the failure reason
  * @version 2.6.1.0
  */
 public final class LoginFail extends L2LoginServerPacket {
+	/**
+	 * Reasons why a login attempt might fail.
+	 */
 	public enum LoginFailReason {
 		REASON_NO_MESSAGE(0x00),
 		REASON_SYSTEM_ERROR_LOGIN_LATER(0x01),
@@ -63,27 +69,27 @@ public final class LoginFail extends L2LoginServerPacket {
 		REASON_CERTIFICATION_FAILED_3_TIMES_GAMEPLAY_BLOCKED_30_MIN(0x36),
 		REASON_CERTIFICATION_DAILY_USE_EXCEEDED(0x37),
 		REASON_CERTIFICATION_UNDERWAY_TRY_AGAIN_LATER(0x38);
-		
-		private final int _code;
-		
+
+		private final int code;
+
 		LoginFailReason(int code) {
-			_code = code;
+			this.code = code;
 		}
-		
-		public final int getCode() {
-			return _code;
+
+		public int getCode() {
+			return code;
 		}
 	}
-	
-	private final LoginFailReason _reason;
-	
+
+	private final LoginFailReason reason;
+
 	public LoginFail(LoginFailReason reason) {
-		_reason = reason;
+		this.reason = reason;
 	}
-	
+
 	@Override
 	protected void write() {
 		writeC(0x01);
-		writeC(_reason.getCode());
+		writeC(reason.getCode());
 	}
 }

@@ -22,11 +22,12 @@ import com.l2jserver.commons.network.BaseRecievePacket;
 import com.l2jserver.loginserver.mail.MailSystem;
 
 /**
+ * Packet received from the game server requesting the login server to send a mail.
  * @author mrTJO
  * @version 2.6.1.0
  */
 public class RequestSendMail extends BaseRecievePacket {
-	
+
 	public RequestSendMail(byte[] decrypt) {
 		super(decrypt);
 		String accountName = readS();

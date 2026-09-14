@@ -23,6 +23,7 @@ import com.l2jserver.loginserver.GameServerThread;
 import com.l2jserver.loginserver.LoginController;
 
 /**
+ * Packet received from the game server containing a list of characters for an account.
  * @author mrTJO
  * @version 2.6.1.0
  */

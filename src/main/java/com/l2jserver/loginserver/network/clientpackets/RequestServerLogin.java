@@ -27,6 +27,8 @@ import com.l2jserver.loginserver.network.serverpackets.PlayFail.PlayFailReason;
 import com.l2jserver.loginserver.network.serverpackets.PlayOk;
 
 /**
+ * Request to log into a specific game server packet.
+ * 
  * <pre>
  * Format is ddc
  * d: first part of session id
@@ -37,39 +39,39 @@ import com.l2jserver.loginserver.network.serverpackets.PlayOk;
  * @version 2.6.1.0
  */
 public class RequestServerLogin extends L2LoginClientPacket {
-	private int _skey1;
-	private int _skey2;
-	private int _serverId;
-	
+	private int sessionKey1;
+	private int sessionKey2;
+	private int serverId;
+
 	public int getSessionKey1() {
-		return _skey1;
+		return sessionKey1;
 	}
-	
+
 	public int getSessionKey2() {
-		return _skey2;
+		return sessionKey2;
 	}
-	
+
 	public int getServerID() {
-		return _serverId;
+		return serverId;
 	}
-	
+
 	@Override
 	public boolean readImpl() {
 		if (super._buf.remaining() >= 9) {
-			_skey1 = readD();
-			_skey2 = readD();
-			_serverId = readC();
+			sessionKey1 = readD();
+			sessionKey2 = readD();
+			serverId = readC();
 			return true;
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void run() {
 		SessionKey sk = getClient().getSessionKey();
 		// if we didn't show the license we can't check these values
-		if (!server().showLicense() || sk.checkLoginPair(_skey1, _skey2)) {
-			if (LoginController.getInstance().isLoginPossible(getClient(), _serverId)) {
+		if (!server().showLicense() || sk.checkLoginPair(sessionKey1, sessionKey2)) {
+			if (LoginController.getInstance().isLoginPossible(getClient(), serverId)) {
 				getClient().setJoinedGS(true);
 				getClient().sendPacket(new PlayOk(sk));
 			} else {

@@ -21,6 +21,7 @@ package com.l2jserver.loginserver.network.loginserverpackets;
 import com.l2jserver.commons.network.BaseSendablePacket;
 
 /**
+ * Packet sent to the game server to respond to a player authentication request.
  * @author -Wooden-
  * @version 2.6.1.0
  */
@@ -30,7 +31,7 @@ public class PlayerAuthResponse extends BaseSendablePacket {
 		writeS(account);
 		writeC(response ? 1 : 0);
 	}
-	
+
 	@Override
 	public byte[] getContent() {
 		return getBytes();

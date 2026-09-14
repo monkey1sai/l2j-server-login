@@ -31,47 +31,52 @@ import org.slf4j.LoggerFactory;
 
 import com.l2jserver.commons.util.Util;
 
+/**
+ * Handles the server status telnet service.
+ * 
+ * @author Zoey76
+ */
 public class Status extends Thread {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(Status.class);
-	
+
 	private final ServerSocket statusServerSocket;
-	
-	private final int _uptime;
-	
-	private String _statusPw;
-	
-	private final List<LoginStatusThread> _loginStatus;
-	
+
+	private final int uptime;
+
+	private String statusPassword;
+
+	private final List<LoginStatusThread> loginStatus;
+
 	public Status() throws IOException {
 		super("Status");
-		_statusPw = telnet().getPassword();
-		
-		if (_statusPw == null) {
-			_statusPw = Util.randomPassword(10);
+
+		statusPassword = telnet().getPassword();
+		if (statusPassword == null) {
+			statusPassword = Util.randomPassword(10);
 			LOG.info("Server's Telnet function has no password defined!");
 			LOG.info("A password has been automatically created!");
-			LOG.info("Password has been set to: {}", _statusPw);
+			LOG.info("Password has been set to: {}", statusPassword);
 		}
-		
+
 		statusServerSocket = new ServerSocket(telnet().getPort());
-		_uptime = (int) System.currentTimeMillis();
-		_loginStatus = new LinkedList<>();
+		uptime = (int) System.currentTimeMillis();
+		loginStatus = new LinkedList<>();
 		LOG.info("Telnet server started successfully, listening on port {}.", telnet().getPort());
 	}
-	
+
 	@Override
 	public void run() {
 		setPriority(Thread.MAX_PRIORITY);
-		
+
 		while (!isInterrupted()) {
 			try {
 				Socket connection = statusServerSocket.accept();
-				LoginStatusThread lst = new LoginStatusThread(connection, _uptime, _statusPw);
+				LoginStatusThread lst = new LoginStatusThread(connection, uptime, statusPassword);
 				if (lst.isAlive()) {
-					_loginStatus.add(lst);
+					loginStatus.add(lst);
 				}
-				
+
 				if (isInterrupted()) {
 					try {
 						statusServerSocket.close();
@@ -92,9 +97,9 @@ public class Status extends Thread {
 			}
 		}
 	}
-	
+
 	public void sendMessageToTelnets(String msg) {
-		for (LoginStatusThread ls : _loginStatus) {
+		for (LoginStatusThread ls : loginStatus) {
 			if (!ls.isInterrupted()) {
 				ls.printToTelnet(msg);
 			}

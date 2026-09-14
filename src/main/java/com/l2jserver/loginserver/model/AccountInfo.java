@@ -26,41 +26,41 @@ import java.util.Objects;
  * @version 2.6.1.0
  */
 public final class AccountInfo {
-	private final String _login;
-	private final String _passHash;
-	private final int _accessLevel;
-	private final int _lastServer;
-	
-	public AccountInfo(final String login, final String passHash, final int accessLevel, final int lastServer) {
+	private final String login;
+	private final String passwordHash;
+	private final int accessLevel;
+	private final int lastServer;
+
+	public AccountInfo(String login, String passwordHash, int accessLevel, int lastServer) {
 		Objects.requireNonNull(login, "login parameter is null");
-		Objects.requireNonNull(passHash, "passHash parameter is null");
-		
+		Objects.requireNonNull(passwordHash, "passHash parameter is null");
+
 		if (login.isEmpty()) {
 			throw new IllegalArgumentException("login string is empty");
 		}
-		if (passHash.isEmpty()) {
+		if (passwordHash.isEmpty()) {
 			throw new IllegalArgumentException("passHash string is empty");
 		}
-		
-		_login = login.toLowerCase();
-		_passHash = passHash;
-		_accessLevel = accessLevel;
-		_lastServer = lastServer;
+
+		this.login = login.toLowerCase();
+		this.passwordHash = passwordHash;
+		this.accessLevel = accessLevel;
+		this.lastServer = lastServer;
 	}
-	
-	public boolean checkPassHash(final String passHash) {
-		return _passHash.equals(passHash);
+
+	public boolean checkPassHash(String passHash) {
+		return passwordHash.equals(passHash);
 	}
-	
+
 	public String getLogin() {
-		return _login;
+		return login;
 	}
-	
+
 	public int getAccessLevel() {
-		return _accessLevel;
+		return accessLevel;
 	}
-	
+
 	public int getLastServer() {
-		return _lastServer;
+		return lastServer;
 	}
 }

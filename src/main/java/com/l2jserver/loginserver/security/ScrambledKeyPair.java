@@ -22,28 +22,32 @@ import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 
+/**
+ * Handles the generation and scrambling of RSA key pairs for secure communication with clients.
+ * @author Zoey76
+ */
 public class ScrambledKeyPair {
-	
-	private final KeyPair pair;
-	
+
+	private final KeyPair keyPair;
+
 	private final byte[] scrambledModulus;
-	
-	public ScrambledKeyPair(KeyPair pPair) {
-		pair = pPair;
-		scrambledModulus = scrambleModulus(((RSAPublicKey) pair.getPublic()).getModulus());
+
+	public ScrambledKeyPair(KeyPair keyPair) {
+		this.keyPair = keyPair;
+		this.scrambledModulus = scrambleModulus(((RSAPublicKey) keyPair.getPublic()).getModulus());
 	}
-	
-	public KeyPair getPair() {
-		return pair;
+
+	public KeyPair getKeyPair() {
+		return keyPair;
 	}
-	
+
 	public byte[] getScrambledModulus() {
 		return scrambledModulus;
 	}
-	
+
 	private byte[] scrambleModulus(BigInteger modulus) {
 		byte[] scrambledMod = modulus.toByteArray();
-		
+
 		if ((scrambledMod.length == 0x81) && (scrambledMod[0] == 0x00)) {
 			byte[] temp = new byte[0x80];
 			System.arraycopy(scrambledMod, 1, temp, 0, 0x80);

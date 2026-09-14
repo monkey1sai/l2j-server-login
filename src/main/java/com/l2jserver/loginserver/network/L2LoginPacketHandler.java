@@ -37,16 +37,16 @@ import com.l2jserver.mmocore.ReceivablePacket;
  * @version 2.6.1.0
  */
 public final class L2LoginPacketHandler implements PacketHandler<L2LoginClient> {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(L2LoginPacketHandler.class);
-	
+
 	@Override
 	public ReceivablePacket<L2LoginClient> handlePacket(ByteBuffer buf, L2LoginClient client) {
 		int opcode = buf.get() & 0xFF;
-		
+
 		ReceivablePacket<L2LoginClient> packet = null;
 		LoginClientState state = client.getState();
-		
+
 		switch (state) {
 			case CONNECTED:
 				if (opcode == 0x07) {
@@ -72,7 +72,7 @@ public final class L2LoginPacketHandler implements PacketHandler<L2LoginClient> 
 		}
 		return packet;
 	}
-	
+
 	private void debugOpcode(int opcode, LoginClientState state) {
 		LOG.warn("Unknown Opcode {} for state {}!", opcode, state.name());
 	}

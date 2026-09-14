@@ -24,6 +24,8 @@ import com.l2jserver.commons.security.crypt.NewCrypt;
 import com.l2jserver.commons.util.Rnd;
 
 /**
+ * Handles encryption and decryption of login client packets.
+ * 
  * @author KenM
  */
 public class LoginCrypt {
@@ -45,19 +47,21 @@ public class LoginCrypt {
 		(byte) 0x6c,
 		(byte) 0x6c
 	};
-	
-	private static final NewCrypt _STATIC_CRYPT = new NewCrypt(STATIC_BLOWFISH_KEY);
-	private NewCrypt _crypt = null;
-	private boolean _static = true;
-	
+
+	private static final NewCrypt STATIC_CRYPT = new NewCrypt(STATIC_BLOWFISH_KEY);
+
+	private NewCrypt crypt = null;
+
+	private boolean useStaticCrypt = true;
+
 	/**
 	 * Method to initialize the blowfish cipher with dynamic key.
 	 * @param key the blowfish key to initialize the dynamic blowfish cipher with
 	 */
 	public void setKey(byte[] key) {
-		_crypt = new NewCrypt(key);
+		crypt = new NewCrypt(key);
 	}
-	
+
 	/**
 	 * Method to decrypt an incoming login client packet.
 	 * @param raw array with encrypted data
@@ -73,11 +77,11 @@ public class LoginCrypt {
 		if ((offset + size) > raw.length) {
 			throw new IOException("raw array too short for size starting from offset");
 		}
-		
-		_crypt.decrypt(raw, offset, size);
+
+		crypt.decrypt(raw, offset, size);
 		return NewCrypt.verifyChecksum(raw, offset, size);
 	}
-	
+
 	/**
 	 * Method to encrypt an outgoing packet to login client.<br>
 	 * Performs padding and resizing of data array.
@@ -90,19 +94,19 @@ public class LoginCrypt {
 	public int encrypt(byte[] raw, final int offset, int size) throws IOException {
 		// reserve checksum
 		size += 4;
-		
-		if (_static) {
+
+		if (useStaticCrypt) {
 			// reserve for XOR "key"
 			size += 4;
-			
+
 			// padding
 			size += 8 - (size % 8);
 			if ((offset + size) > raw.length) {
 				throw new IOException("packet too long");
 			}
 			NewCrypt.encXORPass(raw, offset, size, Rnd.nextInt());
-			_STATIC_CRYPT.crypt(raw, offset, size);
-			_static = false;
+			STATIC_CRYPT.crypt(raw, offset, size);
+			useStaticCrypt = false;
 		} else {
 			// padding
 			size += 8 - (size % 8);
@@ -110,7 +114,7 @@ public class LoginCrypt {
 				throw new IOException("packet too long");
 			}
 			NewCrypt.appendChecksum(raw, offset, size);
-			_crypt.crypt(raw, offset, size);
+			crypt.crypt(raw, offset, size);
 		}
 		return size;
 	}

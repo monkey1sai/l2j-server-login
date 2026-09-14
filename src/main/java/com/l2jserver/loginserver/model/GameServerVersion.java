@@ -71,36 +71,36 @@ public enum GameServerVersion {
 	FAFURION(28, "Fafurion"),
 	PREULDE_OF_WAR(29, "Prelude of War"),
 	DAWN_OF_HEROES(30, "Dawn of Heroes");
-	
+
 	static final Map<Integer, String> versions = new HashMap<>();
-	
+
 	int id;
-	
+
 	String description;
-	
+
 	static {
 		for (var p : GameServerVersion.values()) {
 			versions.put(p.getId(), p.getDescription());
 		}
 	}
-	
+
 	GameServerVersion(int id, String description) {
 		this.id = id;
 		this.description = description;
 	}
-	
+
 	public int getId() {
 		return id;
 	}
-	
+
 	public String getDescription() {
 		return description;
 	}
-	
+
 	public static Map<Integer, String> versions() {
 		return versions;
 	}
-	
+
 	public static String valueOf(int id) {
 		return versions.get(id);
 	}

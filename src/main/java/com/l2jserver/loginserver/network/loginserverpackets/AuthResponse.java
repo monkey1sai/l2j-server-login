@@ -22,17 +22,18 @@ import com.l2jserver.commons.dao.ServerNameDAO;
 import com.l2jserver.commons.network.BaseSendablePacket;
 
 /**
+ * Packet sent to the game server to provide authentication response.
  * @author -Wooden-
  * @version 2.6.1.0
  */
 public class AuthResponse extends BaseSendablePacket {
-	
+
 	public AuthResponse(int serverId) {
 		writeC(0x02);
 		writeC(serverId);
 		writeS(ServerNameDAO.getServer(serverId));
 	}
-	
+
 	@Override
 	public byte[] getContent() {
 		return getBytes();

@@ -21,6 +21,8 @@
 		<dependency-check-maven.level>8</dependency-check-maven.level>
 		<dependency-check-maven.version>13.0.0</dependency-check-maven.version>
 		<maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
+		<maven-checkstyle-plugin.checkstyle.version>14.1.0</maven-checkstyle-plugin.checkstyle.version>
+		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
 		<maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
 		<maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
 	</properties>
@@ -110,6 +112,34 @@
 								<descriptor>src/main/assembly/zip.xml</descriptor>
 							</descriptors>
 						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>${maven-checkstyle-plugin.version}</version>
+				<configuration>
+					<configLocation>checkstyle.xml</configLocation>
+					<consoleOutput>true</consoleOutput>
+					<failsOnError>true</failsOnError>
+					<linkXRef>false</linkXRef>
+					<violationSeverity>warning</violationSeverity>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>com.puppycrawl.tools</groupId>
+						<artifactId>checkstyle</artifactId>
+						<version>${maven-checkstyle-plugin.checkstyle.version}</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<id>validate</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>

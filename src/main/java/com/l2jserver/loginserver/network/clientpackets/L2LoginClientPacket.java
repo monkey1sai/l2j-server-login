@@ -30,9 +30,9 @@ import com.l2jserver.mmocore.ReceivablePacket;
  * @version 2.6.1.0
  */
 public abstract class L2LoginClientPacket extends ReceivablePacket<L2LoginClient> {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(L2LoginClientPacket.class);
-	
+
 	@Override
 	protected final boolean read() {
 		try {
@@ -42,6 +42,6 @@ public abstract class L2LoginClientPacket extends ReceivablePacket<L2LoginClient
 			return false;
 		}
 	}
-	
+
 	protected abstract boolean readImpl();
 }

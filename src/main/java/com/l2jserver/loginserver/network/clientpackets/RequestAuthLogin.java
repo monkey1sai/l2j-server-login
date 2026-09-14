@@ -44,38 +44,38 @@ import com.l2jserver.loginserver.network.serverpackets.ServerList;
  * @version 2.6.1.0
  */
 public class RequestAuthLogin extends L2LoginClientPacket {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(RequestAuthLogin.class);
-	
-	private final byte[] _raw = new byte[128];
-	
-	private String _user;
-	
-	private String _password;
-	
-	private int _ncotp;
-	
+
+	private final byte[] raw = new byte[128];
+
+	private String user;
+
+	private String password;
+
+	private int ncotp;
+
 	public String getPassword() {
-		return _password;
+		return password;
 	}
-	
+
 	public String getUser() {
-		return _user;
+		return user;
 	}
-	
+
 	public int getOneTimePassword() {
-		return _ncotp;
+		return ncotp;
 	}
-	
+
 	@Override
 	public boolean readImpl() {
 		if (super._buf.remaining() >= 128) {
-			readB(_raw);
+			readB(raw);
 			return true;
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void run() {
 		byte[] decrypted;
@@ -83,34 +83,34 @@ public class RequestAuthLogin extends L2LoginClientPacket {
 		try {
 			final Cipher rsaCipher = Cipher.getInstance("RSA/ECB/nopadding");
 			rsaCipher.init(Cipher.DECRYPT_MODE, client.getRSAPrivateKey());
-			decrypted = rsaCipher.doFinal(_raw, 0x00, 0x80);
+			decrypted = rsaCipher.doFinal(raw, 0x00, 0x80);
 		} catch (Exception ex) {
 			LOG.warn("There has been an error trying to login!", ex);
 			return;
 		}
-		
+
 		try {
-			_user = new String(decrypted, 0x5E, 14).trim().toLowerCase();
-			_password = new String(decrypted, 0x6C, 16).trim();
-			_ncotp = decrypted[0x7c];
-			_ncotp |= decrypted[0x7d] << 8;
-			_ncotp |= decrypted[0x7e] << 16;
-			_ncotp |= decrypted[0x7f] << 24;
+			user = new String(decrypted, 0x5E, 14).trim().toLowerCase();
+			password = new String(decrypted, 0x6C, 16).trim();
+			ncotp = decrypted[0x7c];
+			ncotp |= decrypted[0x7d] << 8;
+			ncotp |= decrypted[0x7e] << 16;
+			ncotp |= decrypted[0x7f] << 24;
 		} catch (Exception ex) {
 			LOG.warn("There has been an error parsing credentials!", ex);
 			return;
 		}
-		
+
 		InetAddress clientAddr = getClient().getConnection().getInetAddress();
-		
+
 		final LoginController lc = LoginController.getInstance();
-		AccountInfo info = lc.retrieveAccountInfo(clientAddr, _user, _password);
+		AccountInfo info = lc.retrieveAccountInfo(clientAddr, user, password);
 		if (info == null) {
 			// user or pass wrong
 			client.close(LoginFailReason.REASON_USER_OR_PASS_WRONG);
 			return;
 		}
-		
+
 		AuthLoginResult result = lc.tryCheckinAccount(client, clientAddr, info);
 		switch (result) {
 			case AUTH_SUCCESS -> {
@@ -141,7 +141,7 @@ public class RequestAuthLogin extends L2LoginClientPacket {
 				GameServerInfo gsi = lc.getAccountOnGameServer(info.getLogin());
 				if (gsi != null) {
 					client.close(LoginFailReason.REASON_ACCOUNT_IN_USE);
-					
+
 					// kick from there
 					if (gsi.isAuthed()) {
 						gsi.getGameServerThread().kickPlayer(info.getLogin());

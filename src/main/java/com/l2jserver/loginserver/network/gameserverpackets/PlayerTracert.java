@@ -27,7 +27,7 @@ import com.l2jserver.loginserver.LoginController;
  * @version 2.6.1.0
  */
 public class PlayerTracert extends BaseRecievePacket {
-	
+
 	public PlayerTracert(byte[] decrypt) {
 		super(decrypt);
 		String account = readS();
@@ -36,7 +36,7 @@ public class PlayerTracert extends BaseRecievePacket {
 		String hop2 = readS();
 		String hop3 = readS();
 		String hop4 = readS();
-		
+
 		LoginController.getInstance().setAccountLastTracert(account, pcIp, hop1, hop2, hop3, hop4);
 	}
 }

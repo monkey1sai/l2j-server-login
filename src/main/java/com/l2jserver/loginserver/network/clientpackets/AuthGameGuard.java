@@ -23,53 +23,54 @@ import com.l2jserver.loginserver.network.serverpackets.GGAuth;
 import com.l2jserver.loginserver.network.serverpackets.LoginFail.LoginFailReason;
 
 /**
+ * Handles GameGuard authentication.
  * Format: ddddd
  * @author -Wooden-
  * @version 2.6.1.0
  */
 public class AuthGameGuard extends L2LoginClientPacket {
-	private int _sessionId;
-	private int _data1;
-	private int _data2;
-	private int _data3;
-	private int _data4;
-	
+	private int sessionId;
+	private int data1;
+	private int data2;
+	private int data3;
+	private int data4;
+
 	public int getSessionId() {
-		return _sessionId;
+		return sessionId;
 	}
-	
+
 	public int getData1() {
-		return _data1;
+		return data1;
 	}
-	
+
 	public int getData2() {
-		return _data2;
+		return data2;
 	}
-	
+
 	public int getData3() {
-		return _data3;
+		return data3;
 	}
-	
+
 	public int getData4() {
-		return _data4;
+		return data4;
 	}
-	
+
 	@Override
 	protected boolean readImpl() {
 		if (super._buf.remaining() >= 20) {
-			_sessionId = readD();
-			_data1 = readD();
-			_data2 = readD();
-			_data3 = readD();
-			_data4 = readD();
+			sessionId = readD();
+			data1 = readD();
+			data2 = readD();
+			data3 = readD();
+			data4 = readD();
 			return true;
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void run() {
-		if (_sessionId == getClient().getSessionId()) {
+		if (sessionId == getClient().getSessionId()) {
 			getClient().setState(LoginClientState.AUTHED_GG);
 			getClient().sendPacket(new GGAuth(getClient().getSessionId()));
 		} else {

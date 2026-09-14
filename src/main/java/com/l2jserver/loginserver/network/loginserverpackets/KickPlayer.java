@@ -21,6 +21,7 @@ package com.l2jserver.loginserver.network.loginserverpackets;
 import com.l2jserver.commons.network.BaseSendablePacket;
 
 /**
+ * Packet sent to the game server to request kicking a player.
  * @author -Wooden-
  * @version 2.6.1.0
  */
@@ -29,7 +30,7 @@ public class KickPlayer extends BaseSendablePacket {
 		writeC(0x04);
 		writeS(account);
 	}
-	
+
 	@Override
 	public byte[] getContent() {
 		return getBytes();

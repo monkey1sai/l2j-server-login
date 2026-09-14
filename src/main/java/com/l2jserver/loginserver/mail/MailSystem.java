@@ -42,20 +42,20 @@ import org.w3c.dom.Node;
  * @version 2.6.1.0
  */
 public class MailSystem {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(MailSystem.class);
-	
-	private final Map<String, MailContent> _mailData = new HashMap<>();
-	
+
+	private final Map<String, MailContent> mailData = new HashMap<>();
+
 	public MailSystem() {
 		loadMails();
 	}
-	
+
 	public void sendMail(String account, String messageId, String... args) {
 		BaseMail mail = new BaseMail(account, messageId, args);
 		mail.run();
 	}
-	
+
 	private void loadMails() {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setValidating(false);
@@ -65,7 +65,7 @@ public class MailSystem {
 			LOG.warn("Cannot load email system - Missing file MailList.xml");
 			return;
 		}
-		
+
 		Document doc;
 		try {
 			doc = factory.newDocumentBuilder().parse(file);
@@ -73,27 +73,27 @@ public class MailSystem {
 			LOG.warn("Could not parse MailList.xml file!", ex);
 			return;
 		}
-		
+
 		Node n = doc.getFirstChild();
 		for (Node d = n.getFirstChild(); d != null; d = d.getNextSibling()) {
 			if (d.getNodeName().equals("mail")) {
 				String mailId = d.getAttributes().getNamedItem("id").getNodeValue();
 				String subject = d.getAttributes().getNamedItem("subject").getNodeValue();
 				String maFile = d.getAttributes().getNamedItem("file").getNodeValue();
-				
+
 				File mailFile = new File(server().getDatapackRoot() + "data/mail/" + maFile);
 				try (FileInputStream fis = new FileInputStream(mailFile);
 					BufferedInputStream bis = new BufferedInputStream(fis)) {
 					int bytes = bis.available();
 					byte[] raw = new byte[bytes];
-					
+
 					bis.read(raw);
 					String html = new String(raw, UTF_8);
 					html = html.replaceAll(System.lineSeparator(), "\n");
 					html = html.replace("%servermail%", email().getServerEmail());
 					html = html.replace("%servername%", email().getServerName());
-					
-					_mailData.put(mailId, new MailContent(subject, html));
+
+					mailData.put(mailId, new MailContent(subject, html));
 				} catch (IOException ex) {
 					LOG.warn("There has been an error while reading {}!", maFile, ex);
 				}
@@ -101,33 +101,15 @@ public class MailSystem {
 		}
 		LOG.info("Email system loaded.");
 	}
-	
-	public static class MailContent {
-		private final String _subject;
-		private final String _text;
-		
-		public MailContent(String subject, String text) {
-			_subject = subject;
-			_text = text;
-		}
-		
-		public String getSubject() {
-			return _subject;
-		}
-		
-		public String getText() {
-			return _text;
-		}
+
+	MailContent getMailContent(String mailId) {
+		return mailData.get(mailId);
 	}
-	
-	public MailContent getMailContent(String mailId) {
-		return _mailData.get(mailId);
-	}
-	
+
 	public static MailSystem getInstance() {
 		return SingletonHolder.INSTANCE;
 	}
-	
+
 	private static class SingletonHolder {
 		protected static final MailSystem INSTANCE = new MailSystem();
 	}

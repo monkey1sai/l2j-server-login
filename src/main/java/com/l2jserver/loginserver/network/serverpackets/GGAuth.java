@@ -19,23 +19,24 @@
 package com.l2jserver.loginserver.network.serverpackets;
 
 /**
+ * GameGuard authentication response packet.<br>
  * Format: d d: response
  * @version 2.6.1.0
  */
 public final class GGAuth extends L2LoginServerPacket {
-	
+
 	public static final int SKIP_GG_AUTH_REQUEST = 0x0b;
-	
-	private final int _response;
-	
+
+	private final int response;
+
 	public GGAuth(int response) {
-		_response = response;
+		this.response = response;
 	}
-	
+
 	@Override
 	protected void write() {
 		writeC(0x0b);
-		writeD(_response);
+		writeD(response);
 		writeD(0x00);
 		writeD(0x00);
 		writeD(0x00);

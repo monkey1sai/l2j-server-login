@@ -45,15 +45,18 @@ import com.l2jserver.loginserver.network.loginserverpackets.LoginServerFail;
  * @version 2.6.1.0
  */
 public class L2JGameServerPacketHandler {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(L2JGameServerPacketHandler.class);
-	
+
+	/**
+	 * The connection state of the game server.
+	 */
 	public enum GameServerState {
 		CONNECTED,
 		BF_CONNECTED,
 		AUTHED
 	}
-	
+
 	public static BaseRecievePacket handlePacket(byte[] data, GameServerThread server) {
 		BaseRecievePacket msg = null;
 		int opcode = data[0] & 0xff;
@@ -114,6 +117,10 @@ public class L2JGameServerPacketHandler {
 						server.forceClose(LoginServerFail.NOT_AUTHED);
 						break;
 				}
+				break;
+			default:
+				LOG.warn("Unknown Opcode {} in state {} from game server, closing connection!", Integer.toHexString(opcode).toUpperCase(), state);
+				server.forceClose(LoginServerFail.NOT_AUTHED);
 				break;
 		}
 		return msg;

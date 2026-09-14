@@ -37,9 +37,9 @@ import com.l2jserver.loginserver.GameServerThread;
  * @version 2.6.1.0
  */
 public class BlowFishKey extends BaseRecievePacket {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(BlowFishKey.class);
-	
+
 	public BlowFishKey(byte[] decrypt, GameServerThread server) {
 		super(decrypt);
 		int size = readD();
@@ -59,8 +59,8 @@ public class BlowFishKey extends BaseRecievePacket {
 			}
 			byte[] key = new byte[len - i];
 			System.arraycopy(tempDecryptKey, i, key, 0, len - i);
-			
-			server.SetBlowFish(new NewCrypt(key));
+
+			server.setBlowFish(new NewCrypt(key));
 			if (server().isDebug()) {
 				LOG.info("New BlowFish key received, Blowfish Engine initialized:");
 			}

@@ -40,19 +40,19 @@ import org.aeonbits.owner.Config.Sources;
 @LoadPolicy(MERGE)
 @HotReload(value = 20, unit = MINUTES, type = ASYNC)
 public interface DatabaseConfiguration extends Config {
-	
+
 	@Key("URL")
 	String getURL();
-	
+
 	@Key("User")
 	String getUser();
-	
+
 	@Key("Password")
 	String getPassword();
-	
+
 	@Key("MaxConnections")
 	Integer getMaxConnections();
-	
+
 	@Key("MaxIdleTime")
 	Integer getMaxIdleTime();
 }

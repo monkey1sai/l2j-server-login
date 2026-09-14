@@ -55,23 +55,25 @@ import com.l2jserver.loginserver.security.ScrambledKeyPair;
  * @version 2.6.1.0
  */
 public class LoginController {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(LoginController.class);
-	
-	/** Time before kicking the client if he didn't log yet */
+
+	/** Time before kicking the client if he didn't log yet. */
 	public static final int LOGIN_TIMEOUT = 60 * 1000;
-	
-	/** Authed Clients on LoginServer */
-	protected final Map<String, L2LoginClient> _loginServerClients = new ConcurrentHashMap<>();
-	
-	private final Map<InetAddress, Integer> _failedLoginAttempts = new ConcurrentHashMap<>();
-	private final Map<InetAddress, Long> _bannedIps = new ConcurrentHashMap<>();
-	
-	protected final ScrambledKeyPair[] _keyPairs;
-	
-	protected byte[][] _blowfishKeys;
+
 	private static final int BLOWFISH_KEYS = 20;
-	
+
+	/** Authed Clients on LoginServer. */
+	protected final Map<String, L2LoginClient> loginServerClients = new ConcurrentHashMap<>();
+
+	private final Map<InetAddress, Integer> failedLoginAttempts = new ConcurrentHashMap<>();
+
+	private final Map<InetAddress, Long> bannedIps = new ConcurrentHashMap<>();
+
+	protected final ScrambledKeyPair[] keyPairs;
+
+	protected byte[][] blowfishKeys;
+
 	// SQL Queries
 	private static final String USER_INFO_SELECT = "SELECT login, password, IF(? > value OR value IS NULL, accessLevel, -1) AS accessLevel, lastServer FROM accounts LEFT JOIN (account_data) ON (account_data.account_name=accounts.login AND account_data.var=\"ban_temp\") WHERE login=?";
 	private static final String AUTO_CREATE_ACCOUNTS_INSERT = "INSERT INTO accounts (login, password, lastactive, accessLevel, lastIP) values (?, ?, ?, ?, ?)";
@@ -80,35 +82,35 @@ public class LoginController {
 	private static final String ACCOUNT_ACCESS_LEVEL_UPDATE = "UPDATE accounts SET accessLevel = ? WHERE login = ?";
 	private static final String ACCOUNT_IPS_UPDATE = "UPDATE accounts SET pcIp = ?, hop1 = ?, hop2 = ?, hop3 = ?, hop4 = ? WHERE login = ?";
 	private static final String ACCOUNT_IPAUTH_SELECT = "SELECT * FROM accounts_ipauth WHERE login = ?";
-	
+
 	private LoginController() {
 		LOG.info("Loading Login Controller...");
-		
-		_keyPairs = new ScrambledKeyPair[10];
-		
+
+		keyPairs = new ScrambledKeyPair[10];
+
 		try {
 			final var keygen = KeyPairGenerator.getInstance("RSA");
 			final var spec = new RSAKeyGenParameterSpec(1024, F4);
 			keygen.initialize(spec);
 			for (int i = 0; i < 10; i++) {
-				_keyPairs[i] = new ScrambledKeyPair(keygen.generateKeyPair());
+				keyPairs[i] = new ScrambledKeyPair(keygen.generateKeyPair());
 			}
-			
-			testCipher((RSAPrivateKey) _keyPairs[0].getPair().getPrivate());
-			
+
+			testCipher((RSAPrivateKey) keyPairs[0].getKeyPair().getPrivate());
+
 			LOG.info("Cached 10 KeyPairs for RSA communication.");
 		} catch (Exception ex) {
 			LOG.error("There has been an error loading the key pairs!", ex);
 		}
-		
+
 		// Store keys for blowfish communication
 		generateBlowFishKeys();
-		
+
 		final var purge = new PurgeThread();
 		purge.setDaemon(true);
 		purge.start();
 	}
-	
+
 	/**
 	 * This is mostly to force the initialization of the Crypto Implementation, avoiding it being done on runtime when its first needed.<BR>
 	 * In short, it avoids the worst-case execution time on runtime by doing it on loading.
@@ -119,67 +121,51 @@ public class LoginController {
 		Cipher rsaCipher = Cipher.getInstance("RSA/ECB/nopadding");
 		rsaCipher.init(Cipher.DECRYPT_MODE, key);
 	}
-	
+
 	private void generateBlowFishKeys() {
-		_blowfishKeys = new byte[BLOWFISH_KEYS][16];
-		
+		blowfishKeys = new byte[BLOWFISH_KEYS][16];
+
 		for (int i = 0; i < BLOWFISH_KEYS; i++) {
-			for (int j = 0; j < _blowfishKeys[i].length; j++) {
-				_blowfishKeys[i][j] = (byte) (Rnd.nextInt(255) + 1);
+			for (int j = 0; j < blowfishKeys[i].length; j++) {
+				blowfishKeys[i][j] = (byte) (Rnd.nextInt(255) + 1);
 			}
 		}
-		LOG.info("Stored {} keys for Blowfish communication.", _blowfishKeys.length);
+		LOG.info("Stored {} keys for Blowfish communication.", blowfishKeys.length);
 	}
-	
+
 	public byte[] getBlowfishKey() {
-		return _blowfishKeys[(int) (Math.random() * BLOWFISH_KEYS)];
+		return blowfishKeys[(int) (Math.random() * BLOWFISH_KEYS)];
 	}
-	
+
 	public SessionKey assignSessionKeyToClient(String account, L2LoginClient client) {
 		SessionKey key;
-		
+
 		key = new SessionKey(Rnd.nextInt(), Rnd.nextInt(), Rnd.nextInt(), Rnd.nextInt());
-		_loginServerClients.put(account, client);
+		loginServerClients.put(account, client);
 		return key;
 	}
-	
+
 	public void removeAuthedLoginClient(String account) {
 		if (account == null) {
 			return;
 		}
-		_loginServerClients.remove(account);
+		loginServerClients.remove(account);
 	}
-	
+
 	public L2LoginClient getAuthedClient(String account) {
-		return _loginServerClients.get(account);
+		return loginServerClients.get(account);
 	}
-	
+
 	public AccountInfo retrieveAccountInfo(InetAddress clientAddr, String login, String password) {
 		return retrieveAccountInfo(clientAddr, login, password, true);
 	}
-	
-	private void recordFailedLoginAttempt(InetAddress addr) {
-		final var failedLoginAttempts = _failedLoginAttempts.getOrDefault(addr, 0) + 1;
-		_failedLoginAttempts.put(addr, failedLoginAttempts);
-		
-		if (failedLoginAttempts >= server().getLoginTryBeforeBan()) {
-			addBanForAddress(addr, server().getLoginBlockAfterBan() * 1000);
-			// we need to clear the failed login attempts here, so after the ip ban is over the client has another 5 attempts
-			clearFailedLoginAttempts(addr);
-			LOG.warn("Added banned address {}, too many login attempts!", addr.getHostAddress());
-		}
-	}
-	
-	private void clearFailedLoginAttempts(InetAddress addr) {
-		_failedLoginAttempts.remove(addr);
-	}
-	
+
 	private AccountInfo retrieveAccountInfo(InetAddress addr, String login, String password, boolean autoCreateIfEnabled) {
 		try {
 			final var md = MessageDigest.getInstance("SHA");
 			final var raw = password.getBytes(UTF_8);
 			final var hashBase64 = Base64.getEncoder().encodeToString(md.digest(raw));
-			
+
 			try (var con = ConnectionFactory.getInstance().getConnection();
 				var ps = con.prepareStatement(USER_INFO_SELECT)) {
 				ps.setString(1, Long.toString(System.currentTimeMillis()));
@@ -189,25 +175,25 @@ public class LoginController {
 						if (server().isDebug()) {
 							LOG.info("Account {} exists.", login);
 						}
-						
+
 						final var info = new AccountInfo(rs.getString("login"), rs.getString("password"), rs.getInt("accessLevel"), rs.getInt("lastServer"));
 						if (!info.checkPassHash(hashBase64)) {
 							recordFailedLoginAttempt(addr);
 							return null;
 						}
-						
+
 						clearFailedLoginAttempts(addr);
 						return info;
 					}
 				}
 			}
-			
+
 			if (!autoCreateIfEnabled || !server().autoCreateAccounts()) {
 				// account does not exist and auto create account is not desired
 				recordFailedLoginAttempt(addr);
 				return null;
 			}
-			
+
 			try (var con = ConnectionFactory.getInstance().getConnection();
 				var ps = con.prepareStatement(AUTO_CREATE_ACCOUNTS_INSERT)) {
 				ps.setString(1, login);
@@ -220,7 +206,7 @@ public class LoginController {
 				LOG.warn("There has been an error auto-creating the account {}!", login, ex);
 				return null;
 			}
-			
+
 			LOG.info("Auto-created account {}.", login);
 			return retrieveAccountInfo(addr, login, password, false);
 		} catch (Exception ex) {
@@ -228,7 +214,23 @@ public class LoginController {
 			return null;
 		}
 	}
-	
+
+	private void recordFailedLoginAttempt(InetAddress addr) {
+		final var attempts = failedLoginAttempts.getOrDefault(addr, 0) + 1;
+		failedLoginAttempts.put(addr, attempts);
+
+		if (attempts >= server().getLoginTryBeforeBan()) {
+			addBanForAddress(addr, server().getLoginBlockAfterBan() * 1000);
+			// we need to clear the failed login attempts here, so after the ip ban is over the client has another 5 attempts
+			clearFailedLoginAttempts(addr);
+			LOG.warn("Added banned address {}, too many login attempts!", addr.getHostAddress());
+		}
+	}
+
+	private void clearFailedLoginAttempts(InetAddress addr) {
+		failedLoginAttempts.remove(addr);
+	}
+
 	public AuthLoginResult tryCheckinAccount(L2LoginClient client, InetAddress address, AccountInfo info) {
 		if (info.getAccessLevel() < 0) {
 			if (info.getAccessLevel() == server().autoCreateAccountsAccessLevel()) {
@@ -236,7 +238,7 @@ public class LoginController {
 			}
 			return AuthLoginResult.ACCOUNT_BANNED;
 		}
-		
+
 		AuthLoginResult ret = AuthLoginResult.INVALID_PASSWORD;
 		// check auth
 		if (canCheckIn(client, address, info)) {
@@ -245,15 +247,15 @@ public class LoginController {
 			if (!isAccountInAnyGameServer(info.getLogin())) {
 				// account isn't on any GS verify LS itself
 				ret = AuthLoginResult.ALREADY_ON_LS;
-				
-				if (_loginServerClients.putIfAbsent(info.getLogin(), client) == null) {
+
+				if (loginServerClients.putIfAbsent(info.getLogin(), client) == null) {
 					ret = AuthLoginResult.AUTH_SUCCESS;
 				}
 			}
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Adds the address to the ban list of the login server, with the given end time in milliseconds.
 	 * @param address The Address to be banned.
@@ -261,33 +263,33 @@ public class LoginController {
 	 * @throws UnknownHostException if the address is invalid.
 	 */
 	public void addBanForAddress(String address, long expiration) throws Exception {
-		_bannedIps.putIfAbsent(InetAddress.getByName(address), expiration);
+		bannedIps.putIfAbsent(InetAddress.getByName(address), expiration);
 	}
-	
+
 	/**
 	 * Adds the address to the ban list of the login server, with the given duration.
 	 * @param address The Address to be banned.
 	 * @param duration is milliseconds
 	 */
 	public void addBanForAddress(InetAddress address, long duration) {
-		_bannedIps.putIfAbsent(address, System.currentTimeMillis() + duration);
+		bannedIps.putIfAbsent(address, System.currentTimeMillis() + duration);
 	}
-	
+
 	public boolean isBannedAddress(InetAddress address) throws Exception {
 		String[] parts = address.getHostAddress().split("\\.");
-		Long bi = _bannedIps.get(address);
+		Long bi = bannedIps.get(address);
 		if (bi == null) {
-			bi = _bannedIps.get(InetAddress.getByName(parts[0] + "." + parts[1] + "." + parts[2] + ".0"));
+			bi = bannedIps.get(InetAddress.getByName(parts[0] + "." + parts[1] + "." + parts[2] + ".0"));
 		}
 		if (bi == null) {
-			bi = _bannedIps.get(InetAddress.getByName(parts[0] + "." + parts[1] + ".0.0"));
+			bi = bannedIps.get(InetAddress.getByName(parts[0] + "." + parts[1] + ".0.0"));
 		}
 		if (bi == null) {
-			bi = _bannedIps.get(InetAddress.getByName(parts[0] + ".0.0.0"));
+			bi = bannedIps.get(InetAddress.getByName(parts[0] + ".0.0.0"));
 		}
 		if (bi != null) {
 			if ((bi > 0) && (bi < System.currentTimeMillis())) {
-				_bannedIps.remove(address);
+				bannedIps.remove(address);
 				LOG.info("Removed expired IP address ban {}.", address.getHostAddress());
 				return false;
 			}
@@ -295,22 +297,22 @@ public class LoginController {
 		}
 		return false;
 	}
-	
+
 	public Map<InetAddress, Long> getBannedIps() {
-		return _bannedIps;
+		return bannedIps;
 	}
-	
+
 	/**
-	 * Remove the specified address from the ban list
+	 * Remove the specified address from the ban list.
 	 * @param address The address to be removed from the ban list
 	 * @return true if the ban was removed, false if there was no ban for this ip
 	 */
 	public boolean removeBanForAddress(InetAddress address) {
-		return _bannedIps.remove(address) != null;
+		return bannedIps.remove(address) != null;
 	}
-	
+
 	/**
-	 * Remove the specified address from the ban list
+	 * Remove the specified address from the ban list.
 	 * @param address The address to be removed from the ban list
 	 * @return true if the ban was removed, false if there was no ban for this ip or the address was invalid.
 	 */
@@ -321,15 +323,15 @@ public class LoginController {
 			return false;
 		}
 	}
-	
+
 	public SessionKey getKeyForAccount(String account) {
-		L2LoginClient client = _loginServerClients.get(account);
+		L2LoginClient client = loginServerClients.get(account);
 		if (client != null) {
 			return client.getSessionKey();
 		}
 		return null;
 	}
-	
+
 	public boolean isAccountInAnyGameServer(String account) {
 		Collection<GameServerInfo> serverList = GameServerTable.getInstance().getRegisteredGameServers().values();
 		for (GameServerInfo gsi : serverList) {
@@ -340,7 +342,7 @@ public class LoginController {
 		}
 		return false;
 	}
-	
+
 	public GameServerInfo getAccountOnGameServer(String account) {
 		Collection<GameServerInfo> serverList = GameServerTable.getInstance().getRegisteredGameServers().values();
 		for (GameServerInfo gsi : serverList) {
@@ -351,7 +353,7 @@ public class LoginController {
 		}
 		return null;
 	}
-	
+
 	public void getCharactersOnAccount(String account) {
 		Collection<GameServerInfo> serverList = GameServerTable.getInstance().getRegisteredGameServers().values();
 		for (GameServerInfo gsi : serverList) {
@@ -360,13 +362,13 @@ public class LoginController {
 			}
 		}
 	}
-	
+
 	public boolean isLoginPossible(L2LoginClient client, int serverId) {
 		GameServerInfo gsi = GameServerTable.getInstance().getRegisteredGameServerById(serverId);
 		int access = client.getAccessLevel();
 		if ((gsi != null) && gsi.isAuthed()) {
 			boolean loginOk = ((gsi.getCurrentPlayerCount() < gsi.getMaxPlayers()) && (gsi.getStatus() != ServerStatus.STATUS_GM_ONLY)) || (access > 0);
-			
+
 			if (loginOk && (client.getLastServer() != serverId)) {
 				try (var con = ConnectionFactory.getInstance().getConnection();
 					var ps = con.prepareStatement(ACCOUNT_LAST_SERVER_UPDATE)) {
@@ -381,7 +383,7 @@ public class LoginController {
 		}
 		return false;
 	}
-	
+
 	public void setAccountAccessLevel(String account, int banLevel) {
 		try (var con = ConnectionFactory.getInstance().getConnection();
 			var ps = con.prepareStatement(ACCOUNT_ACCESS_LEVEL_UPDATE)) {
@@ -392,7 +394,7 @@ public class LoginController {
 			LOG.warn("There has been an error setting account level for account {}!", account, ex);
 		}
 	}
-	
+
 	public void setAccountLastTracert(String account, String pcIp, String hop1, String hop2, String hop3, String hop4) {
 		try (var con = ConnectionFactory.getInstance().getConnection();
 			var ps = con.prepareStatement(ACCOUNT_IPS_UPDATE)) {
@@ -407,31 +409,32 @@ public class LoginController {
 			LOG.warn("There has been an error setting last tracert for account {}!", account, ex);
 		}
 	}
-	
+
 	public void setCharactersOnServer(String account, int charsNum, long[] timeToDel, int serverId) {
-		final var client = _loginServerClients.get(account);
+		final var client = loginServerClients.get(account);
 		if (client == null) {
 			return;
 		}
-		
+
 		if (charsNum > 0) {
 			client.setCharsOnServ(serverId, charsNum);
 		}
-		
+
 		if (timeToDel.length > 0) {
 			client.serCharsWaitingDelOnServ(serverId, timeToDel);
 		}
 	}
-	
+
 	/**
-	 * This method returns one of the cached {@link ScrambledKeyPair ScrambledKeyPairs} for communication with Login Clients.
+	 * Returns one of the cached {@link ScrambledKeyPair ScrambledKeyPairs} for communication with Login Clients.
 	 * @return a scrambled keypair
 	 */
 	public ScrambledKeyPair getScrambledRSAKeyPair() {
-		return _keyPairs[Rnd.nextInt(10)];
+		return keyPairs[Rnd.nextInt(10)];
 	}
-	
+
 	/**
+	 * Checks if the account is allowed to check in based on IP restrictions.
 	 * @param client the client
 	 * @param address client host address
 	 * @param info the account info to check in
@@ -450,7 +453,7 @@ public class LoginController {
 						if (!isValidIPAddress(ip)) {
 							continue;
 						}
-						
+
 						final var type = rs.getString("type");
 						if (type.equals("allow")) {
 							ipWhiteList.add(InetAddress.getByName(ip));
@@ -460,20 +463,20 @@ public class LoginController {
 					}
 				}
 			}
-			
+
 			// Check IP
 			if (!ipWhiteList.isEmpty() || !ipBlackList.isEmpty()) {
 				if (!ipWhiteList.isEmpty() && !ipWhiteList.contains(address)) {
 					LOG.warn("Account checkin attempt from address {} not present on whitelist for account {}!", address.getHostAddress(), info.getLogin());
 					return false;
 				}
-				
+
 				if (!ipBlackList.isEmpty() && ipBlackList.contains(address)) {
 					LOG.warn("Account checkin attempt from address {} on blacklist for account {}!", address.getHostAddress(), info.getLogin());
 					return false;
 				}
 			}
-			
+
 			client.setAccessLevel(info.getAccessLevel());
 			client.setLastServer(info.getLastServer());
 			try (var con = ConnectionFactory.getInstance().getConnection();
@@ -489,13 +492,13 @@ public class LoginController {
 			return false;
 		}
 	}
-	
+
 	public boolean isValidIPAddress(String ipAddress) {
 		String[] parts = ipAddress.split("\\.");
 		if (parts.length != 4) {
 			return false;
 		}
-		
+
 		for (String s : parts) {
 			int i = Integer.parseInt(s);
 			if ((i < 0) || (i > 255)) {
@@ -504,16 +507,16 @@ public class LoginController {
 		}
 		return true;
 	}
-	
+
 	class PurgeThread extends Thread {
 		public PurgeThread() {
 			setName("PurgeThread");
 		}
-		
+
 		@Override
 		public void run() {
 			while (!isInterrupted()) {
-				for (L2LoginClient client : _loginServerClients.values()) {
+				for (L2LoginClient client : loginServerClients.values()) {
 					if (client == null) {
 						continue;
 					}
@@ -521,7 +524,7 @@ public class LoginController {
 						client.close(LoginFailReason.REASON_ACCESS_FAILED);
 					}
 				}
-				
+
 				try {
 					Thread.sleep(LOGIN_TIMEOUT / 2);
 				} catch (InterruptedException e) {
@@ -530,7 +533,10 @@ public class LoginController {
 			}
 		}
 	}
-	
+
+	/**
+	 * The result of an account authentication attempt.
+	 */
 	public enum AuthLoginResult {
 		INVALID_PASSWORD,
 		ACCOUNT_INACTIVE,
@@ -539,11 +545,11 @@ public class LoginController {
 		ALREADY_ON_GS,
 		AUTH_SUCCESS
 	}
-	
+
 	public static LoginController getInstance() {
 		return SingletonHolder.INSTANCE;
 	}
-	
+
 	private static class SingletonHolder {
 		protected static final LoginController INSTANCE = new LoginController();
 	}

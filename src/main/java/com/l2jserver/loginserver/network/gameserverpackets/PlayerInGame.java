@@ -35,7 +35,7 @@ import com.l2jserver.loginserver.GameServerThread;
  */
 public class PlayerInGame extends BaseRecievePacket {
 	private static final Logger LOG = LoggerFactory.getLogger(PlayerInGame.class);
-	
+
 	public PlayerInGame(byte[] decrypt, GameServerThread server) {
 		super(decrypt);
 		int size = readH();

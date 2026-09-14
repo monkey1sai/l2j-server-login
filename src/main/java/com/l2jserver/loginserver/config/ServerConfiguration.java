@@ -42,70 +42,70 @@ import org.aeonbits.owner.Config.Sources;
 @LoadPolicy(MERGE)
 @HotReload(value = 20, unit = MINUTES, type = ASYNC)
 public interface ServerConfiguration extends Config {
-	
+
 	@Key("EnableUPnP")
 	boolean isUPnPEnabled();
-	
+
 	@Key("Host")
 	String getHost();
-	
+
 	@Key("Port")
 	int getPort();
-	
+
 	@Key("GameServerHost")
 	String getGameServerHost();
-	
+
 	@Key("GameServerPort")
 	int getGameServerPort();
-	
+
 	@Key("ServerVersions")
 	Set<Integer> getServerVersions();
-	
+
 	@Key("LoginTryBeforeBan")
 	int getLoginTryBeforeBan();
-	
+
 	@Key("LoginBlockAfterBan")
 	int getLoginBlockAfterBan();
-	
+
 	@Key("AcceptNewGameServer")
 	boolean isAcceptNetGameServer();
-	
+
 	@Key("EnableFloodProtection")
 	boolean isFloodProtectionEnabled();
-	
+
 	@Key("FastConnectionLimit")
 	int getFastConnectionLimit();
-	
+
 	@Key("NormalConnectionTime")
 	int getNormalConnectionTime();
-	
+
 	@Key("FastConnectionTime")
 	int getFastConnectionTime();
-	
+
 	@Key("MaxConnectionPerIP")
 	int getMaxConnectionPerIP();
-	
+
 	@Key("AccountInactiveAccessLevel")
 	int getAccountInactiveAccessLevel();
-	
+
 	@Key("ShowLicence")
 	boolean showLicense();
-	
+
 	@Key("AutoCreateAccounts")
 	boolean autoCreateAccounts();
-	
+
 	@Key("AutoCreateAccountsAccessLevel")
 	int autoCreateAccountsAccessLevel();
-	
+
 	@Key("DatapackRoot")
 	String getDatapackRoot();
-	
+
 	@Key("Debug")
 	boolean isDebug();
-	
+
 	@Key("LoginRestartSchedule")
 	boolean isLoginRestartEnabled();
-	
+
 	@Key("LoginRestartTime")
 	int getLoginRestartTime();
 }

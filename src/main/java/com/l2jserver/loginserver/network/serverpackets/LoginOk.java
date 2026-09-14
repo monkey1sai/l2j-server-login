@@ -21,6 +21,8 @@ package com.l2jserver.loginserver.network.serverpackets;
 import com.l2jserver.loginserver.SessionKey;
 
 /**
+ * Packet sent to client to confirm successful login.
+ * 
  * <pre>
  * Format: dddddddd
  * f: the session key
@@ -36,18 +38,19 @@ import com.l2jserver.loginserver.SessionKey;
  * @version 2.6.1.0
  */
 public final class LoginOk extends L2LoginServerPacket {
-	private final int _loginOk1, _loginOk2;
-	
+	private final int loginOk1;
+	private final int loginOk2;
+
 	public LoginOk(SessionKey sessionKey) {
-		_loginOk1 = sessionKey.loginOkID1;
-		_loginOk2 = sessionKey.loginOkID2;
+		loginOk1 = sessionKey.loginOkID1;
+		loginOk2 = sessionKey.loginOkID2;
 	}
-	
+
 	@Override
 	protected void write() {
 		writeC(0x03);
-		writeD(_loginOk1);
-		writeD(_loginOk2);
+		writeD(loginOk1);
+		writeD(loginOk2);
 		writeD(0x00);
 		writeD(0x00);
 		writeD(0x000003ea);

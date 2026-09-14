@@ -19,9 +19,13 @@
 package com.l2jserver.loginserver.network.serverpackets;
 
 /**
+ * Sends a play failure reason to the client.
  * @version 2.6.1.0
  */
 public final class PlayFail extends L2LoginServerPacket {
+	/**
+	 * Reasons why a play attempt might fail.
+	 */
 	public enum PlayFailReason {
 		REASON_NO_MESSAGE(0x00),
 		REASON_SYSTEM_ERROR_LOGIN_LATER(0x01),
@@ -62,27 +66,27 @@ public final class PlayFail extends L2LoginServerPacket {
 		REASON_CERTIFICATION_FAILED_3_TIMES_GAMEPLAY_BLOCKED_30_MIN(0x36),
 		REASON_CERTIFICATION_DAILY_USE_EXCEEDED(0x37),
 		REASON_CERTIFICATION_UNDERWAY_TRY_AGAIN_LATER(0x38);
-		
-		private final int _code;
-		
+
+		private final int code;
+
 		PlayFailReason(int code) {
-			_code = code;
+			this.code = code;
 		}
-		
+
 		public final int getCode() {
-			return _code;
+			return code;
 		}
 	}
-	
-	private final PlayFailReason _reason;
-	
+
+	private final PlayFailReason reason;
+
 	public PlayFail(PlayFailReason reason) {
-		_reason = reason;
+		this.reason = reason;
 	}
-	
+
 	@Override
 	protected void write() {
 		writeC(0x06);
-		writeC(_reason.getCode());
+		writeC(reason.getCode());
 	}
 }

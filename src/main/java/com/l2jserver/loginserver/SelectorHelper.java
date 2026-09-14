@@ -43,34 +43,34 @@ import com.l2jserver.mmocore.ReceivablePacket;
  * @version 2.6.1.0
  */
 public class SelectorHelper implements MMOExecutor<L2LoginClient>, ClientFactory<L2LoginClient>, AcceptFilter {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(SelectorHelper.class);
-	
-	private final ThreadPoolExecutor _generalPacketsThreadPool;
-	
-	private final IPv4Filter _ipv4filter;
-	
+
+	private final ThreadPoolExecutor generalPacketsThreadPool;
+
+	private final IPv4Filter ipv4filter;
+
 	public SelectorHelper() {
-		_generalPacketsThreadPool = new ThreadPoolExecutor(4, 6, 15L, SECONDS, new LinkedBlockingQueue<>());
-		_ipv4filter = new IPv4Filter();
+		generalPacketsThreadPool = new ThreadPoolExecutor(4, 6, 15L, SECONDS, new LinkedBlockingQueue<>());
+		ipv4filter = new IPv4Filter();
 	}
-	
+
 	@Override
 	public void execute(ReceivablePacket<L2LoginClient> packet) {
-		_generalPacketsThreadPool.execute(packet);
+		generalPacketsThreadPool.execute(packet);
 	}
-	
+
 	@Override
 	public L2LoginClient create(MMOConnection<L2LoginClient> con) {
 		L2LoginClient client = new L2LoginClient(con);
 		client.sendPacket(new Init(client));
 		return client;
 	}
-	
+
 	@Override
 	public boolean accept(SocketChannel sc) {
 		try {
-			return _ipv4filter.accept(sc) && !LoginController.getInstance().isBannedAddress(sc.socket().getInetAddress());
+			return ipv4filter.accept(sc) && !LoginController.getInstance().isBannedAddress(sc.socket().getInetAddress());
 		} catch (Exception ex) {
 			LOG.error("Invalid address {}!", sc.socket().getInetAddress(), ex);
 		}

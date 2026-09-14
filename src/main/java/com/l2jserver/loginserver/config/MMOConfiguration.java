@@ -40,19 +40,19 @@ import org.aeonbits.owner.Config.Sources;
 @LoadPolicy(MERGE)
 @HotReload(value = 20, unit = MINUTES, type = ASYNC)
 public interface MMOConfiguration extends Config {
-	
+
 	@Key("SleepTime")
 	int getSleepTime();
-	
+
 	@Key("MaxSendPerPass")
 	int getMaxSendPerPass();
-	
+
 	@Key("MaxReadPerPass")
 	int getMaxReadPerPass();
-	
+
 	@Key("HelperBufferCount")
 	int getHelperBufferCount();
-	
+
 	@Key("TcpNoDelay")
 	boolean isTcpNoDelay();
 }

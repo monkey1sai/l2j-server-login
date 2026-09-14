@@ -31,14 +31,14 @@ import com.l2jserver.loginserver.LoginController;
  * @version 2.6.1.0
  */
 public class ChangeAccessLevel extends BaseRecievePacket {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(ChangeAccessLevel.class);
-	
+
 	public ChangeAccessLevel(byte[] decrypt, GameServerThread server) {
 		super(decrypt);
 		int level = readD();
 		String account = readS();
-		
+
 		LoginController.getInstance().setAccountAccessLevel(account, level);
 		LOG.info("Changed {} access level to {}.", account, level);
 	}

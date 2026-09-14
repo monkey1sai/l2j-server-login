@@ -31,17 +31,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class GameServerListener extends FloodProtectedListener {
 	private static final List<GameServerThread> _gameServers = new CopyOnWriteArrayList<>();
-	
+
 	public GameServerListener() throws Exception {
 		super(server().getGameServerHost(), server().getGameServerPort());
 		setName(getClass().getSimpleName());
 	}
-	
+
 	@Override
 	public void addClient(Socket s) {
 		_gameServers.add(new GameServerThread(s));
 	}
-	
+
 	public void removeGameServer(GameServerThread gst) {
 		_gameServers.remove(gst);
 	}

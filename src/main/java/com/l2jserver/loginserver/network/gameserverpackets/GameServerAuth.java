@@ -57,69 +57,69 @@ import com.l2jserver.loginserver.network.loginserverpackets.LoginServerFail;
  * @version 2.6.1.0
  */
 public class GameServerAuth extends BaseRecievePacket {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(GameServerAuth.class);
-	
-	private final GameServerThread _server;
-	
-	private final byte[] _hexId;
-	
-	private final int _desiredId;
-	
+
+	private final GameServerThread server;
+
+	private final byte[] hexId;
+
+	private final int desiredId;
+
 	@SuppressWarnings("unused")
-	private final boolean _hostReserved;
-	
-	private final boolean _acceptAlternativeId;
-	
-	private final int _maxPlayers;
-	
-	private final int _serverVersion;
-	
-	private final int _port;
-	
-	private final String[] _hosts;
-	
+	private final boolean hostReserved;
+
+	private final boolean acceptAlternativeId;
+
+	private final int maxPlayers;
+
+	private final int serverVersion;
+
+	private final int port;
+
+	private final String[] hosts;
+
 	public GameServerAuth(byte[] decrypt, GameServerThread server) {
 		super(decrypt);
-		_server = server;
-		_serverVersion = readC();
-		_desiredId = readC();
-		_acceptAlternativeId = (readC() != 0);
-		_hostReserved = (readC() != 0);
-		_port = readH();
-		_maxPlayers = readD();
+		this.server = server;
+		serverVersion = readC();
+		desiredId = readC();
+		acceptAlternativeId = (readC() != 0);
+		hostReserved = (readC() != 0);
+		port = readH();
+		maxPlayers = readD();
 		int size = readD();
-		_hexId = readB(size);
+		hexId = readB(size);
 		size = 2 * readD();
-		_hosts = new String[size];
+		hosts = new String[size];
 		for (int i = 0; i < size; i++) {
-			_hosts[i] = readS();
+			hosts[i] = readS();
 		}
-		
+
 		if (server().isDebug()) {
 			LOG.info("Auth request received.");
 		}
-		
+
 		if (handleRegProcess()) {
 			server.sendPacket(new AuthResponse(server.getGameServerInfo().getId()));
-			LOG.info("Game Server {} enabled.", GameServerVersion.valueOf(_serverVersion));
-			
+			LOG.info("Game Server {} enabled.", GameServerVersion.valueOf(serverVersion));
+
 			server.broadcastToTelnet("GameServer [" + server.getServerId() + "] " + ServerNameDAO.getServer(server.getServerId()) + " is connected");
 			server.setLoginConnectionState(GameServerState.AUTHED);
 		}
 	}
-	
+
 	private boolean handleRegProcess() {
-		if (!server().getServerVersions().contains(_serverVersion)) {
-			_server.forceClose(LoginServerFail.REASON_INVALID_GAME_SERVER_VERSION);
+		if (!server().getServerVersions().contains(serverVersion)) {
+			server.forceClose(LoginServerFail.REASON_INVALID_GAME_SERVER_VERSION);
 			return false;
 		}
-		
+
 		GameServerTable gameServerTable = GameServerTable.getInstance();
-		
-		int id = _desiredId;
-		byte[] hexId = _hexId;
-		
+
+		int id = desiredId;
+		byte[] hexId = this.hexId;
+
 		GameServerInfo gsi = gameServerTable.getRegisteredGameServerById(id);
 		// is there a game server registered with this id?
 		if (gsi != null) {
@@ -128,43 +128,43 @@ public class GameServerAuth extends BaseRecievePacket {
 				// check to see if this GS is already connected
 				synchronized (gsi) {
 					if (gsi.isAuthed()) {
-						_server.forceClose(LoginServerFail.REASON_ALREADY_LOGGED_IN);
+						server.forceClose(LoginServerFail.REASON_ALREADY_LOGGED_IN);
 						return false;
 					}
-					_server.attachGameServerInfo(gsi, _port, _hosts, _maxPlayers);
+					server.attachGameServerInfo(gsi, port, hosts, maxPlayers);
 				}
 			} else {
 				// there is already a server registered with the desired id and different hex id
 				// try to register this one with an alternative id
-				if (server().isAcceptNetGameServer() && _acceptAlternativeId) {
-					gsi = new GameServerInfo(id, hexId, _server);
+				if (server().isAcceptNetGameServer() && acceptAlternativeId) {
+					gsi = new GameServerInfo(id, hexId, server);
 					if (gameServerTable.registerWithFirstAvailableId(gsi)) {
-						_server.attachGameServerInfo(gsi, _port, _hosts, _maxPlayers);
+						server.attachGameServerInfo(gsi, port, hosts, maxPlayers);
 						gameServerTable.registerServerOnDB(gsi);
 					} else {
-						_server.forceClose(LoginServerFail.REASON_NO_FREE_ID);
+						server.forceClose(LoginServerFail.REASON_NO_FREE_ID);
 						return false;
 					}
 				} else {
 					// server id is already taken, and we cant get a new one for you
-					_server.forceClose(LoginServerFail.REASON_WRONG_HEXID);
+					server.forceClose(LoginServerFail.REASON_WRONG_HEXID);
 					return false;
 				}
 			}
 		} else {
 			// can we register on this id?
 			if (server().isAcceptNetGameServer()) {
-				gsi = new GameServerInfo(id, hexId, _server);
+				gsi = new GameServerInfo(id, hexId, server);
 				if (gameServerTable.register(id, gsi)) {
-					_server.attachGameServerInfo(gsi, _port, _hosts, _maxPlayers);
+					server.attachGameServerInfo(gsi, port, hosts, maxPlayers);
 					gameServerTable.registerServerOnDB(gsi);
 				} else {
 					// someone took this ID meanwhile
-					_server.forceClose(LoginServerFail.REASON_ID_RESERVED);
+					server.forceClose(LoginServerFail.REASON_ID_RESERVED);
 					return false;
 				}
 			} else {
-				_server.forceClose(LoginServerFail.REASON_WRONG_HEXID);
+				server.forceClose(LoginServerFail.REASON_WRONG_HEXID);
 				return false;
 			}
 		}

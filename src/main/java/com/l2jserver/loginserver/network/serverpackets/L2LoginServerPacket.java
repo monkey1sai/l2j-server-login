@@ -22,9 +22,10 @@ import com.l2jserver.loginserver.network.L2LoginClient;
 import com.l2jserver.mmocore.SendablePacket;
 
 /**
+ * Base class for all packets sent from the Login Server to the client.
  * @author KenM
  * @version 2.6.1.0
  */
 public abstract class L2LoginServerPacket extends SendablePacket<L2LoginClient> {
-	
+
 }

@@ -40,43 +40,43 @@ import org.aeonbits.owner.Config.Sources;
 @LoadPolicy(MERGE)
 @HotReload(value = 20, unit = MINUTES, type = ASYNC)
 public interface EmailConfiguration extends Config {
-	
+
 	@Key("EnableEmail")
 	boolean isEnabled();
-	
+
 	@Key("ServerName")
 	String getServerName();
-	
+
 	@Key("ServerEmail")
 	String getServerEmail();
-	
+
 	@Key("SelectQuery")
 	String getSelectQuery();
-	
+
 	@Key("DatabaseField")
 	String getDatabaseField();
-	
+
 	@Key("Host")
 	String getHost();
-	
+
 	@Key("Port")
 	int getPort();
-	
+
 	@Key("SmtpAuthRequired")
 	boolean isSmtpAuthRequired();
-	
+
 	@Key("SmtpFactory")
 	String getSmtpFactory();
-	
+
 	@Key("SmtpFactoryCallback")
 	boolean smtpFactoryCallback();
-	
+
 	@Key("SmtpUsername")
 	String getSmtpUsername();
-	
+
 	@Key("SmtpPassword")
 	String getSmtpPassword();
-	
+
 	@Key("SystemAddress")
 	String getSystemAddress();
 }

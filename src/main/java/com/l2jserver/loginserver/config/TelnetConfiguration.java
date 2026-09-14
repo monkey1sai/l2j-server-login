@@ -42,16 +42,16 @@ import org.aeonbits.owner.Config.Sources;
 @LoadPolicy(MERGE)
 @HotReload(value = 20, unit = MINUTES, type = ASYNC)
 public interface TelnetConfiguration extends Config {
-	
+
 	@Key("EnableTelnet")
 	boolean isEnabled();
-	
+
 	@Key("Port")
 	int getPort();
-	
+
 	@Key("Password")
 	String getPassword();
-	
+
 	@Key("Hosts")
 	List<String> getHosts();
 }

@@ -31,23 +31,23 @@ public class SessionKey {
 	public final int playOkID2;
 	public final int loginOkID1;
 	public final int loginOkID2;
-	
+
 	public SessionKey(int loginOK1, int loginOK2, int playOK1, int playOK2) {
 		playOkID1 = playOK1;
 		playOkID2 = playOK2;
 		loginOkID1 = loginOK1;
 		loginOkID2 = loginOK2;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "PlayOk: " + playOkID1 + " " + playOkID2 + " LoginOk:" + loginOkID1 + " " + loginOkID2;
 	}
-	
+
 	public boolean checkLoginPair(int loginOk1, int loginOk2) {
 		return (loginOkID1 == loginOk1) && (loginOkID2 == loginOk2);
 	}
-	
+
 	/**
 	 * Only checks the PlayOk part of the session key if server doesn't show the license when player logs in.
 	 * @param other the other session key to validate

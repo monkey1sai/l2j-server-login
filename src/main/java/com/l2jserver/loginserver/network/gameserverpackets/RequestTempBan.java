@@ -31,46 +31,43 @@ import com.l2jserver.loginserver.LoginController;
  * @version 2.6.1.0
  */
 public class RequestTempBan extends BaseRecievePacket {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(RequestTempBan.class);
-	
-	private final String _accountName;
-	
+
+	private final String accountName;
+
 	@SuppressWarnings("unused")
-	private String _banReason;
-	
-	private final String _ip;
-	
-	private final long _banTime;
-	
+	private String banReason;
+
+	private final String ip;
+
+	private final long banTime;
+
 	public RequestTempBan(byte[] decrypt) {
 		super(decrypt);
-		_accountName = readS();
-		_ip = readS();
-		_banTime = readQ();
+		accountName = readS();
+		ip = readS();
+		banTime = readQ();
 		boolean haveReason = readC() != 0;
 		if (haveReason) {
-			_banReason = readS();
+			banReason = readS();
 		}
 		banUser();
 	}
-	
+
 	private void banUser() {
+		// TODO(Zoey76): This must use a transaction to ensure a consistent database state.
+		// TODO(Zoey76): A ban-specific table should be created to store ban reason and IP.
 		try (var con = ConnectionFactory.getInstance().getConnection();
 			var ps = con.prepareStatement("INSERT INTO account_data VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value=?")) {
-			ps.setString(1, _accountName);
+			ps.setString(1, accountName);
 			ps.setString(2, "ban_temp");
-			ps.setString(3, Long.toString(_banTime));
-			ps.setString(4, Long.toString(_banTime));
+			ps.setString(3, Long.toString(banTime));
+			ps.setString(4, Long.toString(banTime));
 			ps.execute();
+			LoginController.getInstance().addBanForAddress(ip, banTime);
 		} catch (Exception ex) {
-			LOG.warn("There has been an error inserting ban for account {}!", _accountName, ex);
-		}
-		
-		try {
-			LoginController.getInstance().addBanForAddress(_ip, _banTime);
-		} catch (Exception e) {
-			
+			LOG.warn("There has been an error banning account {}!", accountName, ex);
 		}
 	}
 }

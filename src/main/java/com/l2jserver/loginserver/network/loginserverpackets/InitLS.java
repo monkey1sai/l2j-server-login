@@ -34,13 +34,13 @@ import com.l2jserver.commons.network.BaseSendablePacket;
  * @version 2.6.1.0
  */
 public class InitLS extends BaseSendablePacket {
-	
+
 	public InitLS(byte[] publicKey) {
 		writeC(0x00);
 		writeD(publicKey.length);
 		writeB(publicKey);
 	}
-	
+
 	@Override
 	public byte[] getContent() {
 		return getBytes();

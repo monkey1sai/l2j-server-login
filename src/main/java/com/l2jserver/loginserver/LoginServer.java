@@ -47,84 +47,84 @@ import com.l2jserver.mmocore.SelectorThread;
  * @version 2.6.1.0
  */
 public final class LoginServer {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(LoginServer.class);
-	
+
 	private static final String BANNED_IPS = "/config/banned_ip.cfg";
-	
+
 	private static LoginServer _instance;
-	
-	private GameServerListener _gameServerListener;
-	
-	private SelectorThread<L2LoginClient> _selectorThread;
-	
-	private Status _statusServer;
-	
+
+	private GameServerListener gameServerListener;
+
+	private SelectorThread<L2LoginClient> selectorThread;
+
+	private Status statusServer;
+
 	public static void main(String[] args) {
 		new LoginServer();
 	}
-	
+
 	public static LoginServer getInstance() {
 		return _instance;
 	}
-	
+
 	private LoginServer() {
 		_instance = this;
-		
+
 		// Prepare Database
-		ConnectionFactory.builder() //
-			.withUrl(database().getURL()) //
-			.withUser(database().getUser()) //
-			.withPassword(database().getPassword()) //
-			.withMaxIdleTime(database().getMaxIdleTime()) //
-			.withMaxPoolSize(database().getMaxConnections()) //
+		ConnectionFactory.builder()
+			.withUrl(database().getURL())
+			.withUser(database().getUser())
+			.withPassword(database().getPassword())
+			.withMaxIdleTime(database().getMaxIdleTime())
+			.withMaxPoolSize(database().getMaxConnections())
 			.build();
-		
+
 		LoginController.getInstance();
-		
+
 		GameServerTable.getInstance();
-		
+
 		loadBanFile();
-		
+
 		if (email().isEnabled()) {
 			MailSystem.getInstance();
 		}
-		
+
 		final SelectorConfig sc = new SelectorConfig();
 		sc.MAX_READ_PER_PASS = mmo().getMaxReadPerPass();
 		sc.MAX_SEND_PER_PASS = mmo().getMaxSendPerPass();
 		sc.SLEEP_TIME = mmo().getSleepTime();
 		sc.HELPER_BUFFER_COUNT = mmo().getHelperBufferCount();
-		
+
 		final L2LoginPacketHandler loginPacketHandler = new L2LoginPacketHandler();
 		final SelectorHelper selectorHelper = new SelectorHelper();
 		try {
-			_selectorThread = new SelectorThread<>(sc, selectorHelper, loginPacketHandler, selectorHelper, selectorHelper);
+			selectorThread = new SelectorThread<>(sc, selectorHelper, loginPacketHandler, selectorHelper, selectorHelper);
 		} catch (Exception ex) {
 			LOG.error("Failed to open Selector!", ex);
 			System.exit(1);
 		}
-		
+
 		try {
-			_gameServerListener = new GameServerListener();
-			_gameServerListener.start();
+			gameServerListener = new GameServerListener();
+			gameServerListener.start();
 			LOG.info("Listening for game servers on {}:{}.", server().getGameServerHost(), server().getGameServerPort());
 		} catch (Exception ex) {
 			LOG.error("Failed to start the Game Server Listener!", ex);
 			System.exit(1);
 		}
-		
+
 		if (telnet().isEnabled()) {
 			try {
-				_statusServer = new Status();
-				_statusServer.start();
+				statusServer = new Status();
+				statusServer.start();
 			} catch (Exception ex) {
 				LOG.warn("Failed to start the Telnet Server!", ex);
 			}
 		} else {
 			LOG.info("Telnet server is currently disabled.");
 		}
-		
+
 		InetAddress bindAddress = null;
 		if (!server().getHost().equals("*")) {
 			try {
@@ -134,41 +134,41 @@ public final class LoginServer {
 			}
 		}
 		try {
-			_selectorThread.openServerSocket(bindAddress, server().getPort());
-			_selectorThread.start();
+			selectorThread.openServerSocket(bindAddress, server().getPort());
+			selectorThread.start();
 			LOG.info("Login Server is now listening on {}:{}.", server().getHost(), server().getPort());
 		} catch (Exception ex) {
 			LOG.error("Failed to open server socket!", ex);
 			System.exit(1);
 		}
-		
+
 		if (server().isUPnPEnabled()) {
 			UPnPService.getInstance().load(server().getPort(), "L2J Login Server");
 		}
 	}
-	
+
 	public Status getStatusServer() {
-		return _statusServer;
+		return statusServer;
 	}
-	
+
 	public GameServerListener getGameServerListener() {
-		return _gameServerListener;
+		return gameServerListener;
 	}
-	
+
 	private void loadBanFile() {
 		try (var fis = getClass().getResourceAsStream(BANNED_IPS);
 			var is = new InputStreamReader(fis);
 			var lnr = new LineNumberReader(is)) {
-			lnr.lines() //
-				.map(String::trim) //
-				.filter(l -> !l.isEmpty() && (l.charAt(0) != '#')) //
+			lnr.lines()
+				.map(String::trim)
+				.filter(l -> !l.isEmpty() && (l.charAt(0) != '#'))
 				.forEach(line -> {
 					String[] parts = line.split("#", 2); // address[ duration][ # comments]
 					line = parts[0];
 					parts = line.split("\\s+"); // durations might be aligned via multiple spaces
 					String address = parts[0];
 					long duration = 0;
-					
+
 					if (parts.length > 1) {
 						try {
 							duration = Long.parseLong(parts[1]);
@@ -177,7 +177,7 @@ public final class LoginServer {
 							return;
 						}
 					}
-					
+
 					try {
 						LoginController.getInstance().addBanForAddress(address, duration);
 					} catch (Exception ex) {
@@ -188,7 +188,7 @@ public final class LoginServer {
 			LOG.warn("Error while reading the bans file {}!", BANNED_IPS, ex);
 		}
 		LOG.info("Loaded {} banned IPs.", LoginController.getInstance().getBannedIps().size());
-		
+
 		if (server().isLoginRestartEnabled()) {
 			final var restartLoginServer = new LoginServerRestart();
 			restartLoginServer.setDaemon(true);
@@ -196,12 +196,12 @@ public final class LoginServer {
 			LOG.info("Scheduled restart after {} hours.", server().getLoginRestartTime());
 		}
 	}
-	
+
 	class LoginServerRestart extends Thread {
 		public LoginServerRestart() {
 			setName("LoginServerRestart");
 		}
-		
+
 		@Override
 		public void run() {
 			while (!isInterrupted()) {
@@ -214,7 +214,7 @@ public final class LoginServer {
 			}
 		}
 	}
-	
+
 	public void shutdown(boolean restart) {
 		Runtime.getRuntime().exit(restart ? 2 : 0);
 	}

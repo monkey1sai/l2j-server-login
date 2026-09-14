@@ -21,20 +21,23 @@ package com.l2jserver.loginserver.network.serverpackets;
 import com.l2jserver.loginserver.SessionKey;
 
 /**
+ * Packet sent to the client to confirm that the requested server login was successful.
+ * @author Zoey76
  * @version 2.6.1.0
  */
 public final class PlayOk extends L2LoginServerPacket {
-	private final int _playOk1, _playOk2;
-	
+	private final int playOk1;
+	private final int playOk2;
+
 	public PlayOk(SessionKey sessionKey) {
-		_playOk1 = sessionKey.playOkID1;
-		_playOk2 = sessionKey.playOkID2;
+		playOk1 = sessionKey.playOkID1;
+		playOk2 = sessionKey.playOkID2;
 	}
-	
+
 	@Override
 	protected void write() {
 		writeC(0x07);
-		writeD(_playOk1);
-		writeD(_playOk2);
+		writeD(playOk1);
+		writeD(playOk2);
 	}
 }
